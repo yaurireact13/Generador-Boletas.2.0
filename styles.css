@@ -263,11 +263,22 @@
   .empty-hist{color:var(--ink-soft);font-size:13px;padding:6px 2px;}
 
   @media print{
+    @page{
+      size:80mm 180mm;
+      margin:0;
+    }
+    body{
+      margin:0;
+      padding:0;
+      background:#fff;
+    }
     body *{visibility:hidden;}
     .ticket, .ticket *{visibility:visible;}
     .ticket{
-      position:absolute;
+      position:fixed;
       top:0; left:0;
+      right:0;
+      margin:0 auto;
       box-shadow:none;
       width:80mm;
     }
