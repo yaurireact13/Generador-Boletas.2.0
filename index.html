@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de Boletas</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+<!-- 
+  <header class="top">
+    <h1>Generador de boletas</h1>
+    <p>Crea y guarda comprobantes de venta con numeración correlativa, cálculo automático de IGV y un ticket listo para imprimir o entregar en la entrega contra-reembolso.</p>
+    <div class="notice">
+      Esto genera un <strong>recibo / comprobante interno</strong> para tus registros y para entregar al cliente en la entrega. No es una boleta electrónica válida ante SUNAT — para eso necesitas emitir desde el portal SUNAT (facturador gratuito), un PSE/OSE acreditado, o un sistema de facturación electrónica conectado a tu RUC.
+    </div>
+  </header>
+-->
+  <div class="app">
+    <div class="col-left">
+
+      <details class="card" id="configCard">
+        <summary><h2>Datos de la empresa</h2></summary>
+        <div class="body">
+          <div class="grid2">
+            <div class="field">
+              <label>Razón social</label>
+              <input type="text" id="cfgNombre" placeholder="KAEL IMPORTACIONES SOCIEDAD ANONIMA CERRADA KAEL IMPORTACIONES S.A.C.">
+            </div>
+            <div class="field">
+              <label>RUC</label>
+              <input type="text" id="cfgRuc" placeholder="20608273621">
+            </div>
+          </div>
+          <div class="field">
+            <label>Dirección</label>
+            <input type="text" id="cfgDireccion" placeholder="JR. COTABAMBAS NRO. 211 DPTO. 240 CERCADO LIMA LIMA - LIMA - LIMA">
+          </div>
+          <div class="grid2">
+            <div class="field">
+              <label>Teléfono</label>
+              <input type="text" id="cfgTelefono" placeholder="992155022">
+            </div>
+            <div class="field">
+              <label>Atendido por</label>
+              <input type="text" id="cfgAtendido" placeholder="Ventas 6 MONICA">
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="field">
+              <label>Serie</label>
+              <input type="text" id="cfgSerie" placeholder="BB06">
+            </div>
+            <div class="field">
+              <label>Próximo correlativo</label>
+              <input type="number" id="cfgCorrelativo" min="1">
+            </div>
+          </div>
+          <div class="field">
+            <label>Contenido del código QR</label>
+            <input type="text" id="cfgQrTexto" placeholder="20608273621">
+          </div>
+          <div class="field">
+            <label>N° de resolución SUNAT (texto de pie de página)</label>
+            <input type="text" id="cfgResolucion" placeholder="0180050000781/SUNAT">
+          </div>
+          <button class="secondary-btn" id="btnGuardarConfig">Guardar datos de la empresa</button>
+        </div>
+      </details>
+
+      <details class="card" id="catalogoCard">
+        <summary><h2>Catálogo rápido de productos</h2></summary>
+        <div class="body">
+          <div class="grid3">
+            <div class="field" style="grid-column:span 2;">
+              <label>Producto</label>
+              <input type="text" id="catNombre" placeholder="Ej: Depiladora IPL">
+            </div>
+            <div class="field">
+              <label>Precio (S/)</label>
+              <input type="number" id="catPrecio" step="0.10" min="0">
+            </div>
+          </div>
+          <button class="btn-add" id="btnAddCatalogo">+ Agregar al catálogo</button>
+          <div class="chips" id="catalogoChips"></div>
+        </div>
+      </details>
+
+      <div class="card">
+        <h2>Datos del cliente</h2>
+        <div class="grid3">
+          <div class="field">
+            <label>Documento</label>
+            <select id="cliTipoDoc">
+              <option value="DNI">DNI</option>
+              <option value="RUC">RUC</option>
+              <option value="SIN DOCUMENTO">Sin documento</option>
+            </select>
+          </div>
+          <div class="field" style="grid-column:span 2;">
+            <label>Número de documento</label>
+            <input type="text" id="cliNumDoc" placeholder="00000000">
+          </div>
+        </div>
+        <div class="field">
+          <label>Nombre / Razón social</label>
+          <input type="text" id="cliNombre" placeholder="Cliente genérico" value="Cliente genérico">
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>Dirección (opcional)</label>
+            <input type="text" id="cliDireccion" placeholder="Distrito, referencia">
+          </div>
+          <div class="field">
+            <label>Teléfono (opcional)</label>
+            <input type="tel" id="cliTelefono" placeholder="9xxxxxxxx">
+          </div>
+        </div>
+        <div class="field">
+          <label>Forma de pago</label>
+          <select id="formaPago">
+            <option>CONTRA ENTREGA - EFECTIVO</option>
+            <option>CONTRA ENTREGA - YAPE</option>
+            <option>CONTRA ENTREGA - PLIN</option>
+            <option>EFECTIVO</option>
+            <option>YAPE</option>
+            <option>PLIN</option>
+            <option>TRANSFERENCIA</option>
+            <option>TARJETA</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Ítems</h2>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th style="width:44%;">Descripción</th>
+              <th style="width:14%;">Cant.</th>
+              <th style="width:20%;">P. Unit. (S/)</th>
+              <th style="width:18%;">Total</th>
+              <th style="width:4%;"></th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+        <button class="btn-add" id="btnAddItem">+ Agregar ítem</button>
+      </div>
+
+    </div>
+
+    <div class="col-right preview-sticky">
+      <div class="ticket-shell">
+        <div class="ticket" id="ticket"></div>
+      </div>
+      <div class="card actions-card">
+        <button class="primary-btn" id="btnEmitir">Emitir y guardar boleta</button>
+        <button class="secondary-btn" id="btnPrint">Imprimir / guardar como PDF</button>
+        <div class="status-msg" id="statusMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Historial de boletas emitidas</h2>
+    <button class="secondary-btn" id="btnExportarHistorial">Descargar historial en JSON</button>
+    <table class="hist" id="histTable">
+      <thead>
+        <tr><th>N°</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Pago</th><th></th></tr>
+      </thead>
+      <tbody id="histBody"></tbody>
+    </table>
+    <div class="empty-hist" id="histEmpty" style="display:none;">Todavía no emites ninguna boleta.</div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
+
