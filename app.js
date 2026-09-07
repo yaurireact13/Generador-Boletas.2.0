@@ -375,7 +375,7 @@
       var t = computeTotals();
       var numero = currentNumero();
       var fecha = fechaHoraActual();
-      var cliente = document.getElementById('cliNombre').value || 'Cliente genérico';
+      var cliente = document.getElementById('cliNombre').value || 'Ingresa Datos del Cliente';
       var pago = document.getElementById('formaPago').value;
 
       renderTicket(numero, fecha);
