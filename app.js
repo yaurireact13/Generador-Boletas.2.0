@@ -232,6 +232,14 @@
     return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes());
   }
 
+  function nombreArchivoBoleta(){
+    var d = new Date();
+    var pad = function(n){ return String(n).padStart(2,'0'); };
+    var dni = document.getElementById('cliNumDoc').value.trim() || 'SIN-DNI';
+    dni = dni.replace(/[\\/:*?"<>|]/g, '-');
+    return 'BOLETA '+pad(d.getDate())+'-'+pad(d.getMonth()+1)+' - '+dni;
+  }
+
   function renderTicket(numeroOverride, fechaOverride){
     var t = computeTotals();
     var cliente = document.getElementById('cliNombre').value || 'Cliente genérico';
@@ -332,6 +340,17 @@
 
   // ---------- events ----------
   function bindEvents(){
+    document.getElementById('btnNuevaBoleta').addEventListener('click', function(){
+      items = [newItem()];
+      document.getElementById('cliNumDoc').value = '';
+      document.getElementById('cliNombre').value = 'Cliente genérico';
+      document.getElementById('cliDireccion').value = '';
+      document.getElementById('cliTelefono').value = '';
+      renderItems();
+      renderTicket();
+      setStatus('Lista para crear una nueva boleta.');
+    });
+
     document.getElementById('btnAddItem').addEventListener('click', function(){
       items.push(newItem());
       renderItems();
@@ -394,7 +413,10 @@
     });
 
     document.getElementById('btnPrint').addEventListener('click', function(){
+      var tituloOriginal = document.title;
+      document.title = nombreArchivoBoleta();
       window.print();
+      setTimeout(function(){ document.title = tituloOriginal; }, 1000);
     });
 
     document.getElementById('btnExportarHistorial').addEventListener('click', function(){
