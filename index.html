@@ -8,15 +8,6 @@
 </head>
 <body>
 <div class="wrap">
-<!-- 
-  <header class="top">
-    <h1>Generador de boletas</h1>
-    <p>Crea y guarda comprobantes de venta con numeración correlativa, cálculo automático de IGV y un ticket listo para imprimir o entregar en la entrega contra-reembolso.</p>
-    <div class="notice">
-      Esto genera un <strong>recibo / comprobante interno</strong> para tus registros y para entregar al cliente en la entrega. No es una boleta electrónica válida ante SUNAT — para eso necesitas emitir desde el portal SUNAT (facturador gratuito), un PSE/OSE acreditado, o un sistema de facturación electrónica conectado a tu RUC.
-    </div>
-  </header>
--->
   <div class="app">
     <div class="col-left">
 
@@ -26,7 +17,7 @@
           <div class="grid2">
             <div class="field">
               <label>Razón social</label>
-              <input type="text" id="cfgNombre" placeholder="KAEL IMPORTACIONES SOCIEDAD ANONIMA CERRADA KAEL IMPORTACIONES S.A.C.">
+              <input type="text" id="cfgNombre" placeholder="KAEL IMPORTACIONES S.A.C.">
             </div>
             <div class="field">
               <label>RUC</label>
@@ -39,7 +30,7 @@
           </div>
           <div class="grid2">
             <div class="field">
-              <label>Teléfono</label>
+              <label>Teléfono / Central</label>
               <input type="text" id="cfgTelefono" placeholder="992155022">
             </div>
             <div class="field">
@@ -56,6 +47,10 @@
               <label>Próximo correlativo</label>
               <input type="number" id="cfgCorrelativo" min="1">
             </div>
+          </div>
+          <div class="field">
+            <label>Sitio web (pie de boleta)</label>
+            <input type="text" id="cfgWeb" placeholder="https://koraglow.store/">
           </div>
           <div class="field">
             <label>Contenido del código QR</label>
@@ -183,4 +178,3 @@
 <script src="app.js"></script>
 </body>
 </html>
-

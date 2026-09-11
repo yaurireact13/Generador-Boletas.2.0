@@ -2,13 +2,14 @@
 
   // ---------- state ----------
   var config = {
-    nombre:"KAEL IMPORTACIONES SOCIEDAD ANONIMA CERRADA",
+    nombre:"KAEL IMPORTACIONES S.A.C.",
     ruc:"20608273621",
     direccion:"JR. COTABAMBAS NRO. 211 DPTO. 240 CERCADO LIMA LIMA - LIMA - LIMA",
     telefono:"992155022",
     atendido:"Ventas 6 MONICA",
     serie:"BB06",
     correlativo:5,
+    web:"https://koraglow.store/",
     qrTexto:"20608273621",
     resolucion:"0180050000781/SUNAT"
   };
@@ -122,7 +123,7 @@
     var entero = Math.floor(total+0.0001);
     var centavos = Math.round((total-entero)*100);
     var cent = String(centavos).padStart(2,'0');
-    return 'SON: ' + enteroALetras(entero) + ' Y ' + cent + '/100 SOLES';
+    return enteroALetras(entero) + ' CON ' + cent + '/100 SOLES';
   }
 
   // ---------- rendering: form ----------
@@ -134,6 +135,7 @@
     document.getElementById('cfgAtendido').value = config.atendido;
     document.getElementById('cfgSerie').value = config.serie;
     document.getElementById('cfgCorrelativo').value = config.correlativo;
+    document.getElementById('cfgWeb').value = config.web || 'https://koraglow.store/';
     document.getElementById('cfgQrTexto').value = config.qrTexto || '20608273621';
     document.getElementById('cfgResolucion').value = config.resolucion || '0180050000781/SUNAT';
   }
@@ -223,13 +225,13 @@
 
   // ---------- ticket preview ----------
   function currentNumero(){
-    return config.serie + '-' + String(config.correlativo).padStart(8,'0');
+    return config.serie + '-' + String(config.correlativo).padStart(6,'0');
   }
 
   function fechaHoraActual(){
     var d = new Date();
     var pad = function(n){ return String(n).padStart(2,'0'); };
-    return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+    return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
   }
 
   function nombreArchivoBoleta(){
@@ -260,7 +262,7 @@
       +'<div class="center brand">'+escapeHtml(config.nombre)+'</div>'
       +(config.ruc? '<div class="center">RUC: '+escapeHtml(config.ruc)+'</div>' : '')
       +(config.direccion? '<div class="center">'+escapeHtml(config.direccion)+'</div>' : '')
-      +(config.telefono? '<div class="center">'+escapeHtml(config.telefono)+'</div>' : '')
+      +(config.telefono? '<div class="center">CENTRAL TELEFÓNICA '+escapeHtml(config.telefono)+'</div>' : '')
       +'<div class="divider"></div>'
       +'<div class="center bold">BOLETA DE VENTA / RECIBO</div>'
       +'<div class="center">'+numero+'</div>'
@@ -287,7 +289,8 @@
       +'<div>* '+escapeHtml(pago)+' - S/ '+t.total.toFixed(2)+'</div>'
       +'<div class="divider"></div>'
       +'<div class="center small">Autorizado mediante resolución Nro.<br>'+escapeHtml(config.resolucion||'0180050000781/SUNAT')+'.</div>'
-      +'<div class="center small">Representación impresa de la BOLETA DE VENTA ELECTRONICA</div>';
+      +'<div class="center small">Representación impresa de la BOLETA DE VENTA ELECTRONICA</div>'
+      +'<div class="center web-link">Emitido desde '+escapeHtml(config.web||'https://koraglow.store/')+'</div>';
 
     document.getElementById('ticket').innerHTML = html;
 
@@ -376,8 +379,9 @@
       config.atendido = document.getElementById('cfgAtendido').value;
       config.serie = document.getElementById('cfgSerie').value || 'B001';
       config.correlativo = Number(document.getElementById('cfgCorrelativo').value)||1;
+      config.web = document.getElementById('cfgWeb').value || 'www.tu-negocio.com';
       config.qrTexto = document.getElementById('cfgQrTexto').value || '20608273621';
-      config.resolucion = document.getElementById('cfgResolucion').value || '0180050000781/SUNAT';
+      config.resolucion = document.getElementById('cfgResolucion').value || '034-005-0005315';
       await saveConfig();
       renderTicket();
       setStatus('Datos de la empresa guardados.');
