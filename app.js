@@ -422,6 +422,25 @@
   }
 
   // ---------- history ----------
+  function cargarBoletaHistorial(h){
+    document.getElementById('cliTipoDoc').value = h.tipoDoc || 'DNI';
+    document.getElementById('cliNumDoc').value = h.numDoc || '';
+    document.getElementById('cliNombre').value = h.cliente || 'Cliente genérico';
+    document.getElementById('cliDireccion').value = h.direccion || '';
+    document.getElementById('cliTelefono').value = h.telefono || '';
+    document.getElementById('formaPago').value = h.pago;
+
+    items = (h.items || []).map(function(it){
+      itemUid++;
+      return {id:itemUid, desc:it.desc, cant:it.cant, precio:it.precio};
+    });
+    if(items.length===0) items.push(newItem());
+
+    setDniHint('');
+    renderItems();
+    renderTicket(h.numero, h.fecha);
+  }
+
   function renderHistorial(){
     var body = document.getElementById('histBody');
     var empty = document.getElementById('histEmpty');
@@ -431,16 +450,34 @@
     historial.slice().reverse().forEach(function(h){
       var tr = document.createElement('tr');
       tr.innerHTML = '<td>'+h.numero+'</td><td>'+h.fecha+'</td><td>'+escapeHtml(h.cliente)+'</td>'
-        +'<td>S/ '+h.total.toFixed(2)+'</td><td>'+escapeHtml(h.pago)+'</td><td></td>';
+        +'<td>S/ '+h.total.toFixed(2)+'</td><td>'+escapeHtml(h.pago)+'</td><td class="hist-actions"></td>';
       var tdBtn = tr.lastElementChild;
-      var btn = document.createElement('button');
-      btn.className = 'link-btn';
-      btn.textContent = 'Ver / reimprimir';
-      btn.addEventListener('click', function(){
-        renderTicket(h.numero, h.fecha);
+
+      var btnVer = document.createElement('button');
+      btnVer.className = 'link-btn';
+      btnVer.textContent = 'Ver';
+      btnVer.title = 'Rellena el formulario con los datos de esta boleta';
+      btnVer.addEventListener('click', function(){
+        cargarBoletaHistorial(h);
         window.scrollTo({top:0, behavior:'smooth'});
       });
-      tdBtn.appendChild(btn);
+
+      var btnReimprimir = document.createElement('button');
+      btnReimprimir.className = 'link-btn';
+      btnReimprimir.textContent = 'Reimprimir';
+      btnReimprimir.title = 'Vuelve a imprimir esta misma boleta';
+      btnReimprimir.addEventListener('click', function(){
+        cargarBoletaHistorial(h);
+        window.scrollTo({top:0, behavior:'smooth'});
+        var tituloOriginal = document.title;
+        document.title = nombreArchivoBoleta();
+        ajustarTamanioPaginaImpresion();
+        window.print();
+        setTimeout(function(){ document.title = tituloOriginal; }, 1000);
+      });
+
+      tdBtn.appendChild(btnVer);
+      tdBtn.appendChild(btnReimprimir);
       body.appendChild(tr);
     });
   }
@@ -519,6 +556,10 @@
 
       historial.push({
         numero:numero, fecha:fecha, cliente:cliente, pago:pago,
+        tipoDoc: document.getElementById('cliTipoDoc').value,
+        numDoc: document.getElementById('cliNumDoc').value,
+        direccion: document.getElementById('cliDireccion').value,
+        telefono: document.getElementById('cliTelefono').value,
         total:t.total, items: JSON.parse(JSON.stringify(items))
       });
       config.correlativo = config.correlativo + 1;
