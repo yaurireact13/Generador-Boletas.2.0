@@ -314,30 +314,82 @@
   }
   .empty-hist{color:var(--ink-soft);font-size:13px;padding:6px 2px;}
 
+  .field-hint{
+    display:block;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:5px;
+    line-height:1.4;
+  }
+  .field-hint a{color:var(--accent-dark);}
+
+  .dni-hint{
+    font-size:11.5px;
+    margin-top:6px;
+    min-height:14px;
+    color:var(--ink-soft);
+  }
+  .dni-hint.loading{color:var(--ink-soft);}
+  .dni-hint.success{color:var(--accent-dark);font-weight:600;}
+  .dni-hint.error{color:var(--danger);}
+  .dni-use-btn{
+    margin-left:6px;
+    background:none;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:2px 8px;
+    font-size:11px;
+    font-weight:600;
+    cursor:pointer;
+    color:var(--accent-dark);
+  }
+  .dni-use-btn:hover{border-color:var(--accent);}
+
+  .print-hint{
+    font-size:11px;
+    color:var(--ink-soft);
+    line-height:1.4;
+    margin-top:8px;
+    text-align:center;
+  }
+
   @media print{
     @page{
-      size:80mm 180mm;
+      size:80mm auto;
       margin:0;
-      padding:0;
     }
-    body{
+    html, body{
       margin:0;
       padding:0;
       background:#fff;
     }
-    body *{visibility:hidden;}
-    .ticket, .ticket *{visibility:visible;}
+    /* Se oculta con display:none (no visibility:hidden) todo lo que no sea
+       la boleta, para que esos bloques no ocupen espacio en el documento:
+       si quedaran "invisibles pero presentes" el navegador calcula una
+       altura de página gigante y genera páginas en blanco o corta la boleta. */
+    .col-left,
+    .actions-card,
+    .wrap > .card{
+      display:none !important;
+    }
+    .wrap, .app, .col-right, .ticket-shell{
+      display:block !important;
+      position:static !important;
+      margin:0 !important;
+      padding:0 !important;
+      width:auto !important;
+      max-width:none !important;
+      background:#fff !important;
+    }
     .ticket{
-      position:fixed;
-      top:0; left:0;
-      right:0;
-      margin:0 auto;
       box-shadow:none;
       width:80mm;
-      padding:10mm 8mm;
+      margin:0 auto;
+      padding:8mm 6mm;
       font-size:11.5px;
       line-height:1.55;
     }
     .ticket .divider{border-top:1px solid #ccc;}
     .ticket th{border-bottom-color:#ccc;}
+    .ticket .web-link{display:none;}
   }

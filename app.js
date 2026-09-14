@@ -11,12 +11,15 @@
     correlativo:5,
     web:"https://koraglow.store/",
     qrTexto:"20608273621",
-    resolucion:"0180050000781/SUNAT"
+    resolucion:"0180050000781/SUNAT",
+    dniToken:""
   };
   var catalogo = [];
   var historial = [];
   var items = [];
   var itemUid = 0;
+  var dniLookupTimer = null;
+  var dniLookupSeq = 0;
 
   function newItem(desc, precio){
     itemUid++;
@@ -138,6 +141,7 @@
     document.getElementById('cfgWeb').value = config.web || 'https://koraglow.store/';
     document.getElementById('cfgQrTexto').value = config.qrTexto || '20608273621';
     document.getElementById('cfgResolucion').value = config.resolucion || '0180050000781/SUNAT';
+    document.getElementById('cfgDniToken').value = config.dniToken || '';
   }
 
   function renderCatalogo(){
@@ -311,6 +315,75 @@
     });
   }
 
+  // ---------- consulta DNI (eldni.com) ----------
+  function setDniHint(html, cls){
+    var hint = document.getElementById('dniHint');
+    if(!hint) return;
+    hint.className = 'dni-hint' + (cls ? ' ' + cls : '');
+    hint.innerHTML = html || '';
+  }
+
+  function nombreCompletoDesdeApiDni(data){
+    if(!data) return '';
+    var apPat = data.apellidoPaterno || data.apePaterno || data.ape_paterno || '';
+    var apMat = data.apellidoMaterno || data.apeMaterno || data.ape_materno || '';
+    var nombres = data.nombres || data.preNombres || data.pre_nombres || '';
+    var apellidos = [apPat, apMat].filter(Boolean).join(' ');
+    if(apellidos && nombres) return (apellidos + ', ' + nombres).trim();
+    var directo = data.nombreCompleto || data.nombre_completo || data.resultado || data.nombre || '';
+    return String(directo || '').trim();
+  }
+
+  async function buscarDniEnLinea(dni){
+    var seq = ++dniLookupSeq;
+    setDniHint('Buscando datos del DNI…', 'loading');
+    try{
+      var token = (config.dniToken || '').trim();
+      var url = 'https://eldni.com/api/dni/' + encodeURIComponent(dni) + (token ? ('?token=' + encodeURIComponent(token)) : '');
+      var res = await fetch(url, { headers: { 'Accept':'application/json' } });
+      if(seq !== dniLookupSeq) return;
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      var data = await res.json();
+      if(seq !== dniLookupSeq) return;
+      var nombreCompleto = nombreCompletoDesdeApiDni(data);
+      if(!nombreCompleto) throw new Error('sin datos');
+
+      var nombreInput = document.getElementById('cliNombre');
+      var esNombrePorDefecto = !nombreInput.value.trim() || nombreInput.value.trim().toUpperCase() === 'CLIENTE GENÉRICO';
+
+      if(esNombrePorDefecto){
+        nombreInput.value = nombreCompleto;
+        renderTicket();
+        setDniHint('✓ ' + escapeHtml(nombreCompleto), 'success');
+      }else{
+        setDniHint('✓ ' + escapeHtml(nombreCompleto) + ' <button type="button" class="dni-use-btn" id="dniUseBtn">Usar este nombre</button>', 'success');
+        var useBtn = document.getElementById('dniUseBtn');
+        if(useBtn){
+          useBtn.addEventListener('click', function(){
+            nombreInput.value = nombreCompleto;
+            renderTicket();
+            setDniHint('✓ ' + escapeHtml(nombreCompleto), 'success');
+          });
+        }
+      }
+    }catch(e){
+      if(seq !== dniLookupSeq) return;
+      setDniHint('No se pudo autocompletar el nombre (ingrésalo manualmente).', 'error');
+    }
+  }
+
+  function evaluarBusquedaDni(){
+    clearTimeout(dniLookupTimer);
+    dniLookupSeq++;
+    var tipo = document.getElementById('cliTipoDoc').value;
+    var numero = document.getElementById('cliNumDoc').value.trim();
+    if(tipo !== 'DNI' || !/^\d{8}$/.test(numero)){
+      setDniHint('');
+      return;
+    }
+    dniLookupTimer = setTimeout(function(){ buscarDniEnLinea(numero); }, 500);
+  }
+
   // ---------- history ----------
   function renderHistorial(){
     var body = document.getElementById('histBody');
@@ -349,6 +422,7 @@
       document.getElementById('cliNombre').value = 'Cliente genérico';
       document.getElementById('cliDireccion').value = '';
       document.getElementById('cliTelefono').value = '';
+      setDniHint('');
       renderItems();
       renderTicket();
       setStatus('Lista para crear una nueva boleta.');
@@ -382,6 +456,7 @@
       config.web = document.getElementById('cfgWeb').value || 'www.tu-negocio.com';
       config.qrTexto = document.getElementById('cfgQrTexto').value || '20608273621';
       config.resolucion = document.getElementById('cfgResolucion').value || '034-005-0005315';
+      config.dniToken = document.getElementById('cfgDniToken').value.trim();
       await saveConfig();
       renderTicket();
       setStatus('Datos de la empresa guardados.');
@@ -392,6 +467,8 @@
       document.getElementById(id).addEventListener('input', function(){ renderTicket(); });
       document.getElementById(id).addEventListener('change', function(){ renderTicket(); });
     });
+    document.getElementById('cliNumDoc').addEventListener('input', evaluarBusquedaDni);
+    document.getElementById('cliTipoDoc').addEventListener('change', evaluarBusquedaDni);
 
     document.getElementById('btnEmitir').addEventListener('click', async function(){
       if(items.length===0){ setStatus('Agrega al menos un ítem antes de emitir.'); return; }
