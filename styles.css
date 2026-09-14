@@ -312,6 +312,7 @@
     font-size:12.5px;
     padding:0;
   }
+  .hist-actions .link-btn + .link-btn{margin-left:12px;}
   .empty-hist{color:var(--ink-soft);font-size:13px;padding:6px 2px;}
 
   .field-hint{
