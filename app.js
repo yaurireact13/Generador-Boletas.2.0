@@ -352,7 +352,7 @@
     });
   }
 
-  // ---------- consulta DNI (eldni.com) ----------
+  // ---------- consulta DNI (buscardniperu.com, con eldni.com como respaldo) ----------
   function setDniHint(html, cls){
     var hint = document.getElementById('dniHint');
     if(!hint) return;
@@ -362,8 +362,8 @@
 
   function nombreCompletoDesdeApiDni(data){
     if(!data) return '';
-    var apPat = data.apellidoPaterno || data.apePaterno || data.ape_paterno || '';
-    var apMat = data.apellidoMaterno || data.apeMaterno || data.ape_materno || '';
+    var apPat = data.apellidoPaterno || data.apePaterno || data.ape_paterno || data.ap_pat || '';
+    var apMat = data.apellidoMaterno || data.apeMaterno || data.ape_materno || data.ap_mat || '';
     var nombres = data.nombres || data.preNombres || data.pre_nombres || '';
     var apellidos = [apPat, apMat].filter(Boolean).join(' ');
     if(apellidos && nombres) return (apellidos + ', ' + nombres).trim();
@@ -371,42 +371,69 @@
     return String(directo || '').trim();
   }
 
+  // No requiere token; es la fuente principal de autocompletado.
+  async function consultarBuscarDniPeru(dni){
+    var url = 'https://buscardniperu.com/api/consulta/person/dni/' + encodeURIComponent(dni) + '?tipo=dni';
+    var res = await fetch(url, { headers: { 'Accept':'application/json' } });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    var nombreCompleto = nombreCompletoDesdeApiDni(data);
+    if(!nombreCompleto) throw new Error('sin datos');
+    return nombreCompleto;
+  }
+
+  // Respaldo opcional: requiere que el usuario cargue su propio token en Configuración.
+  async function consultarEldni(dni){
+    var token = (config.dniToken || '').trim();
+    if(!token) throw new Error('sin token');
+    var url = 'https://eldni.com/api/dni/' + encodeURIComponent(dni) + '?token=' + encodeURIComponent(token);
+    var res = await fetch(url, { headers: { 'Accept':'application/json' } });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    var nombreCompleto = nombreCompletoDesdeApiDni(data);
+    if(!nombreCompleto) throw new Error('sin datos');
+    return nombreCompleto;
+  }
+
+  function aplicarNombreEncontrado(nombreCompleto){
+    var nombreInput = document.getElementById('cliNombre');
+    var esNombrePorDefecto = !nombreInput.value.trim() || nombreInput.value.trim().toUpperCase() === 'CLIENTE GENÉRICO';
+
+    if(esNombrePorDefecto){
+      nombreInput.value = nombreCompleto;
+      renderTicket();
+      setDniHint('✓ ' + escapeHtml(nombreCompleto), 'success');
+    }else{
+      setDniHint('✓ ' + escapeHtml(nombreCompleto) + ' <button type="button" class="dni-use-btn" id="dniUseBtn">Usar este nombre</button>', 'success');
+      var useBtn = document.getElementById('dniUseBtn');
+      if(useBtn){
+        useBtn.addEventListener('click', function(){
+          nombreInput.value = nombreCompleto;
+          renderTicket();
+          setDniHint('✓ ' + escapeHtml(nombreCompleto), 'success');
+        });
+      }
+    }
+  }
+
   async function buscarDniEnLinea(dni){
     var seq = ++dniLookupSeq;
     setDniHint('Buscando datos del DNI…', 'loading');
+
+    var nombreCompleto = '';
     try{
-      var token = (config.dniToken || '').trim();
-      var url = 'https://eldni.com/api/dni/' + encodeURIComponent(dni) + (token ? ('?token=' + encodeURIComponent(token)) : '');
-      var res = await fetch(url, { headers: { 'Accept':'application/json' } });
-      if(seq !== dniLookupSeq) return;
-      if(!res.ok) throw new Error('HTTP ' + res.status);
-      var data = await res.json();
-      if(seq !== dniLookupSeq) return;
-      var nombreCompleto = nombreCompletoDesdeApiDni(data);
-      if(!nombreCompleto) throw new Error('sin datos');
-
-      var nombreInput = document.getElementById('cliNombre');
-      var esNombrePorDefecto = !nombreInput.value.trim() || nombreInput.value.trim().toUpperCase() === 'CLIENTE GENÉRICO';
-
-      if(esNombrePorDefecto){
-        nombreInput.value = nombreCompleto;
-        renderTicket();
-        setDniHint('✓ ' + escapeHtml(nombreCompleto), 'success');
-      }else{
-        setDniHint('✓ ' + escapeHtml(nombreCompleto) + ' <button type="button" class="dni-use-btn" id="dniUseBtn">Usar este nombre</button>', 'success');
-        var useBtn = document.getElementById('dniUseBtn');
-        if(useBtn){
-          useBtn.addEventListener('click', function(){
-            nombreInput.value = nombreCompleto;
-            renderTicket();
-            setDniHint('✓ ' + escapeHtml(nombreCompleto), 'success');
-          });
-        }
+      nombreCompleto = await consultarBuscarDniPeru(dni);
+    }catch(e1){
+      try{
+        nombreCompleto = await consultarEldni(dni);
+      }catch(e2){
+        if(seq !== dniLookupSeq) return;
+        setDniHint('No se pudo autocompletar el nombre (ingrésalo manualmente).', 'error');
+        return;
       }
-    }catch(e){
-      if(seq !== dniLookupSeq) return;
-      setDniHint('No se pudo autocompletar el nombre (ingrésalo manualmente).', 'error');
     }
+    if(seq !== dniLookupSeq) return;
+    aplicarNombreEncontrado(nombreCompleto);
   }
 
   function evaluarBusquedaDni(){
