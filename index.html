@@ -61,9 +61,9 @@
             <input type="text" id="cfgResolucion" placeholder="0180050000781/SUNAT">
           </div>
           <div class="field">
-            <label>Token API consulta DNI (eldni.com) — opcional</label>
-            <input type="text" id="cfgDniToken" placeholder="Pega aquí tu token gratuito">
-            <small class="field-hint">Se usa para autocompletar el nombre del cliente al escribir su DNI. Regístrate gratis en <a href="https://eldni.com" target="_blank" rel="noopener noreferrer">eldni.com</a> para obtener tu token.</small>
+            <label>Token de respaldo para consulta DNI (eldni.com) — opcional</label>
+            <input type="text" id="cfgDniToken" placeholder="Solo si quieres una fuente extra de respaldo">
+            <small class="field-hint">El nombre del cliente se autocompleta solo al escribir su DNI (sin token). Este campo es opcional, solo se usa como respaldo si esa consulta falla. Regístrate gratis en <a href="https://eldni.com" target="_blank" rel="noopener noreferrer">eldni.com</a> para obtener un token.</small>
           </div>
           <button class="secondary-btn" id="btnGuardarConfig">Guardar datos de la empresa</button>
         </div>
