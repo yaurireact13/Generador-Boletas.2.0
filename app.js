@@ -246,6 +246,43 @@
     return 'BOLETA '+pad(d.getDate())+'-'+pad(d.getMonth()+1)+' - '+dni;
   }
 
+  // Chrome no siempre reconoce "size:80mm auto" como una medida de papel
+  // válida y cae al tamaño Carta/A4, dejando franjas blancas a los costados.
+  // Por eso, justo antes de imprimir, medimos la boleta y fijamos un alto
+  // exacto en mm para que el diálogo de impresión use el tamaño correcto.
+  function ajustarTamanioPaginaImpresion(){
+    var ticket = document.getElementById('ticket');
+    if(!ticket) return;
+
+    // El ticket en pantalla tiene otro ancho/padding que en impresión (80mm,
+    // 8mm/6mm), así que el texto se acomoda distinto. Para medir el alto real
+    // que tendrá al imprimir, se mide un clon oculto con las medidas exactas
+    // de impresión, en vez de usar el alto que tiene en pantalla.
+    var clone = ticket.cloneNode(true);
+    clone.style.position = 'fixed';
+    clone.style.visibility = 'hidden';
+    clone.style.pointerEvents = 'none';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    clone.style.boxSizing = 'border-box';
+    clone.style.width = '80mm';
+    clone.style.padding = '8mm 6mm';
+    clone.style.margin = '0';
+    clone.style.boxShadow = 'none';
+    document.body.appendChild(clone);
+    var alturaPx = clone.getBoundingClientRect().height;
+    document.body.removeChild(clone);
+
+    var alturaMm = Math.ceil(alturaPx * 25.4 / 96) + 6;
+    var styleTag = document.getElementById('dynamicPrintPageSize');
+    if(!styleTag){
+      styleTag = document.createElement('style');
+      styleTag.id = 'dynamicPrintPageSize';
+      document.head.appendChild(styleTag);
+    }
+    styleTag.textContent = '@media print{ @page{ size:80mm ' + alturaMm + 'mm; margin:0; } }';
+  }
+
   function renderTicket(numeroOverride, fechaOverride){
     var t = computeTotals();
     var cliente = document.getElementById('cliNombre').value || 'Cliente genérico';
@@ -496,9 +533,12 @@
     document.getElementById('btnPrint').addEventListener('click', function(){
       var tituloOriginal = document.title;
       document.title = nombreArchivoBoleta();
+      ajustarTamanioPaginaImpresion();
       window.print();
       setTimeout(function(){ document.title = tituloOriginal; }, 1000);
     });
+
+    window.addEventListener('beforeprint', ajustarTamanioPaginaImpresion);
 
     document.getElementById('btnExportarHistorial').addEventListener('click', function(){
       var contenido = JSON.stringify(historial, null, 2);
